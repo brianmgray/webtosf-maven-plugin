@@ -123,22 +123,22 @@ public class WebToSf extends Task {
                 new FileOutputStream(new File(staticresources, ZIP_FILENAME + ".resource"))));
         try {
             for (FileSet fs : zipContents) {
-                 
+            	
                 if (!fs.isFilesystemOnly()) {
                     throw new BuildException("only filesystem flesets supported");
                 }
                  
                 DirectoryScanner ds = fs.getDirectoryScanner(getProject());
-                File baseDir = getProject().getBaseDir();
+                File baseDir = this.fromDir;
                 File fsDir = fs.getDir(getProject());
- 
+
                 // Keep path as folders
                 String path = "";
                 for (String part : pathDifference(baseDir, fsDir)) {
                     path += part;
                     path += "/";
                 }
-                 
+
                 for (String fsName : ds.getIncludedFiles()) {
                      
                     String newName = path + fsName;
