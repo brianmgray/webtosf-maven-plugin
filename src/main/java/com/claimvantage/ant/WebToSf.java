@@ -231,7 +231,7 @@ public class WebToSf extends Task {
          
         // Prepend path
         String name = "";
-        for (String path : pathDifference(getProject().getBaseDir(), f.getParentFile())) {
+        for (String path : pathDifference(this.fromDir, f.getParentFile())) {
             name += cleanName(path);
         }
         name += cleanName(removeSuffix(f.getName()));
