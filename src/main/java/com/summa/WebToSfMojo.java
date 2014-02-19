@@ -52,6 +52,10 @@ public class WebToSfMojo extends AbstractMojo {
      * Class used to represent a filter for this mojo (token gets replaced by value)
      */
     public static class Filter {
+        public Filter(String token, String value) {
+            this.token = token;
+            this.value = value;
+        }
         protected String token;
         protected String value;
         protected String getValue() {

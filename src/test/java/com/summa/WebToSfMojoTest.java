@@ -7,11 +7,17 @@ import org.junit.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 
+import static com.google.common.collect.Lists.*;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.*;
+import static org.junit.matchers.JUnitMatchers.containsString;
 
 /** @author bgray */
 public class WebToSfMojoTest {
+
+    public static final String UNZIP_DIR = "unzipResources";
 
     private WebToSfMojo mojo;
 
@@ -22,6 +28,7 @@ public class WebToSfMojoTest {
         this.mojo = new WebToSfMojo();
         TestUtils.reflectionSet(mojo, "zipFilename", "appzip");
         TestUtils.reflectionSet(mojo, "webappDir", createFileSet());
+        TestUtils.reflectionSet(mojo, "filters", createFilters());
 
         this.outputDir = new File("./testOutput");
         if (!outputDir.exists()) {
@@ -32,7 +39,7 @@ public class WebToSfMojoTest {
     }
 
     @Test
-    public void testMojo() throws Exception {
+    public void testMojo_resourcesInTheRightPlaces() throws Exception {
         // method under test
         mojo.execute();
 
@@ -50,13 +57,34 @@ public class WebToSfMojoTest {
         assertTrue("staticresources bundle meta missing", new File(this.outputDir,
                 "staticresources/appzip.resource-meta.xml").exists());
 
-        File unzipDir = new File(outputDir, "unzipResources");
+        File unzipDir = new File(outputDir, UNZIP_DIR);
         TestUtils.unzip(resourceBundle, unzipDir);
 
         // check js
         assertTrue("js missing", new File(unzipDir, "js").exists());
         assertTrue("test.js missing", new File(unzipDir, "js/test.js").exists());
         assertFalse("exclude.js found", new File(unzipDir, "js/exclude.js").exists());
+    }
+
+    @Test
+    public void testMojo_patterns() throws Exception {
+        // method under test
+        mojo.execute();
+
+        File testPage = new File(this.outputDir, "pages/test.page");
+        assertTrue("test page missing", testPage.exists());
+
+        // read the file into a list of Strings
+        List<String> lines = TestUtils.readFile(testPage);
+
+        // check the lines for replacements
+        int goodCount = 0;
+        for (String line : lines) {
+            assertThat("page contained <doctype>", line, not(containsString("<!doctype html>")));
+            assertThat("page contained <script>", line, not(containsString("</script>")));
+            goodCount += line.contains("<apex:includeScript") ? 1 : 0;
+        }
+        assertTrue("Page did not contain <apex:includeScript> tag", goodCount > 0);
     }
 
     private FileSet createFileSet() {
@@ -77,4 +105,12 @@ public class WebToSfMojoTest {
         return fileSet;
     }
 
+    private List<WebToSfMojo.Filter> createFilters() {
+        return newArrayList(
+            new WebToSfMojo.Filter("<!doctype html>", ""),
+            new WebToSfMojo.Filter("<script src=\"", "<apex:includeScript value="),
+            new WebToSfMojo.Filter("</script>", "</apex:includeScript>"),
+            new WebToSfMojo.Filter("js/test.js", "{!URLFor($Resource.appzip, 'js/test.js')}")
+        );
+    }
 }

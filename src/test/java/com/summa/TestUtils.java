@@ -3,9 +3,11 @@ package com.summa;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -113,5 +115,23 @@ public final class TestUtils {
                 zis.close();
             }
         }
+    }
+
+    /**
+     * Read a file into a List<String>
+     * @param testPage
+     * @return
+     * @throws IOException
+     */
+    public static List<String> readFile(File testPage) throws IOException {
+        List<String> lines = newArrayList();
+        FileReader fr = new FileReader(testPage);
+        BufferedReader reader = new BufferedReader(fr);
+        String line = reader.readLine();
+        while (line != null) {
+            lines.add(line);
+            line = reader.readLine();
+        }
+        return lines;
     }
 }
