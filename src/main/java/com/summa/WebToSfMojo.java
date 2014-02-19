@@ -18,6 +18,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -39,10 +40,18 @@ public class WebToSfMojo extends AbstractMojo {
     /**
      * Extensions considered "text"
      */
-    private static final List<String> TEXT_EXTENSIONS = new ImmutableList.Builder<String>()
+    private static final List<String> EXTENSIONS_TEXT = new ImmutableList.Builder<String>()
             .add(".css")
             .add(".js")
             .add(".txt")
+            .build();
+
+    /**
+     * Extensions considered "html"
+     */
+    private static final List<String> EXTENSIONS_HTML = new ImmutableList.Builder<String>()
+            .add(".html")
+            .add(".htm")
             .build();
 
     /**
@@ -52,14 +61,6 @@ public class WebToSfMojo extends AbstractMojo {
 
         private String token;
         private String value;
-
-        public void setToken(String token) {
-            this.token = token;
-        }
-
-        public void setValue(String value) {
-            this.value = value;
-        }
 
         protected String getValue() {
             return this.value == null ? "" : value;
@@ -94,7 +95,7 @@ public class WebToSfMojo extends AbstractMojo {
         File[] files = this.getFilesFromWebappDir();
         validateAndDebug(files);
 
-        File staticResourcesDir = new File(outputDir.getAbsolutePath(), "staticResourcesDir");
+        File staticResourcesDir = new File(outputDir.getAbsolutePath(), "staticResources");
         if (!staticResourcesDir.exists()) {
             staticResourcesDir.mkdirs();
         }
@@ -102,7 +103,7 @@ public class WebToSfMojo extends AbstractMojo {
         try {
             zipResources(staticResourcesDir, files);
             createForceDotComMetaData(staticResourcesDir);
-//            pages(fromDir);
+            transformAllHtmlToPages(files);
         } catch (IOException e) {
             throw new MojoExecutionException("Error executing mojo", e);
         }
@@ -121,13 +122,11 @@ public class WebToSfMojo extends AbstractMojo {
             File baseDir = new File(this.webappDir.getDirectory());
 
             for (File file : files) {
-                String name = file.getName();
                 String path = Utils.getRelativePath(baseDir, file);
 
-                getLog().info("zipping dir=" + file + " file=" + name + " to=" + path);
-
                 zos.putNextEntry(new ZipEntry(path));
-                if (isText(name)) {
+                if (checkType(file, EXTENSIONS_TEXT)) {
+                    getLog().info("zipping dir=" + file + " file=" + file.getName() + " to=" + path);
                     // Replace
                     BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
                     try {
@@ -140,8 +139,11 @@ public class WebToSfMojo extends AbstractMojo {
                     } finally {
                         r.close();
                     }
+                } else if (checkType(file, EXTENSIONS_HTML)) {
+                    // do nothing
                 } else {
                     // Just byte for byte copy
+                    getLog().info("zipping dir=" + file + " file=" + file.getName() + " to=" + path);
                     BufferedInputStream is = new BufferedInputStream(new FileInputStream(file));
                     try {
                         byte[] buf = new byte[4092];
@@ -183,6 +185,77 @@ public class WebToSfMojo extends AbstractMojo {
     }
 
     /**
+     * Iterate through all files and transform HTML to pages
+     * @param files
+     */
+    protected void transformAllHtmlToPages(File[] files) throws IOException {
+        File pagesDir = new File(this.outputDir, "pages");
+        if (!pagesDir.exists()) {
+            pagesDir.mkdirs();
+        }
+
+        for (File file : files) {
+            if (file.isFile() && checkType(file, EXTENSIONS_HTML)) {
+                transformHtmlToPage(pagesDir, file);
+            }
+        }
+    }
+
+    /**
+     * Transform a single htmlFile to a Force.com .page file
+     * TODO ugh, clean up
+     * @param pagesDir
+     * @param htmlFile
+     */
+    private void transformHtmlToPage(File pagesDir, File htmlFile) throws IOException {
+        // Prepend path
+        File baseDir = new File(this.webappDir.getDirectory());
+        String name = "";
+        for (String path : Utils.pathDifference(baseDir, htmlFile.getParentFile())) {
+            name += Utils.cleanName(path);
+        }
+        name += Utils.cleanName(Utils.removeSuffix(htmlFile.getName()));
+
+        File to = new File(pagesDir, name + ".page");
+        File toMeta = new File(pagesDir, name + ".page-meta.xml");
+        getLog().info("transforming page file=" + htmlFile + " to=" + to);
+
+        BufferedReader r = new BufferedReader(new FileReader(htmlFile));
+        try {
+            // Data
+            BufferedWriter w = new BufferedWriter(new FileWriter(to));
+            try {
+                w.write("<apex:page showHeader=\"false\" sidebar=\"false\""
+                        + " standardStylesheets=\"false\""
+                        + " applyHtmlTag=\"false\">" + LF + LF);
+                String line;
+                while ((line = r.readLine()) != null) {
+                    w.write(replace(line));
+                    w.write(LF);
+                }
+                w.write(LF + "</apex:page>");
+            } finally {
+                w.close();
+            }
+
+            // Meta
+            BufferedWriter ww = new BufferedWriter(new FileWriter(toMeta));
+            try {
+                ww.write("" + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + LF
+                        + "<StaticResource xmlns=\"http://soap.sforce.com/2006/04/metadata\">" + LF
+                        + "    <apiVersion>29.0</apiVersion>" + LF
+                        + "    <label>" + name + "</label>" + LF
+                        + "</StaticResource>"
+                );
+            } finally {
+                ww.close();
+            }
+        } finally {
+            r.close();
+        }
+    }
+
+    /**
      * Replace a line according to all our filters
      * @param line
      * @return the replaced line
@@ -191,7 +264,7 @@ public class WebToSfMojo extends AbstractMojo {
         for (Filter f : filters) {
             if (line.contains(f.token)) {
                 getLog().info("... replacing " + f.token + " in line " + line);
-                line = line.replace(f.token, f.value);
+                line = line.replace(f.token, f.getValue());
             }
         }
         return line;
@@ -240,12 +313,15 @@ public class WebToSfMojo extends AbstractMojo {
     }
 
     /**
+     * Check that the file with the given name has an extension in the given list
      * Is the file a text file?
-     * @param name
-     * @return
+     * @param file to check
+     * @param extensions a List of extensions
+     * @return true if one of the extensions matches the filename, false otherwise
      */
-    private boolean isText(final String name) {
-        return Iterables.any(TEXT_EXTENSIONS, new Predicate<String>() {
+    private boolean checkType(File file, List<String> extensions) {
+        final String name = file.getName();
+        return Iterables.any(extensions, new Predicate<String>() {
             @Override
             public boolean apply(@Nullable String extension) {
                 return name != null && name.toLowerCase().endsWith(extension);
