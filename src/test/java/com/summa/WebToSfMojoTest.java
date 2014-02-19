@@ -57,10 +57,6 @@ public class WebToSfMojoTest {
         assertTrue("js missing", new File(unzipDir, "js").exists());
         assertTrue("test.js missing", new File(unzipDir, "js/test.js").exists());
         assertFalse("exclude.js found", new File(unzipDir, "js/exclude.js").exists());
-
-        // check HTML
-        assertTrue("test.html missing", new File(unzipDir, "test.html").exists());
-
     }
 
     private FileSet createFileSet() {

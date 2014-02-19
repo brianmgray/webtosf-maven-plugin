@@ -2,14 +2,17 @@ package com.summa;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.tools.ant.util.StringUtils;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
+import java.util.zip.ZipOutputStream;
 
 import static com.google.common.collect.Iterables.transform;
 
@@ -46,6 +49,35 @@ public final class Utils {
      */
     public static String getRelativePath(File base, File file) {
         return base.toURI().relativize(file.toURI()).getPath();
+    }
+
+    /**
+     * Create a new directory
+     * @param parent
+     * @param dirName
+     * @return reference to the new directory
+     */
+    public static File createDir(File parent, String dirName) {
+        File staticResourcesDir = new File(parent.getAbsolutePath(), dirName);
+        if (!staticResourcesDir.exists()) {
+            staticResourcesDir.mkdirs();
+        }
+        return staticResourcesDir;
+    }
+
+    /**
+     * Close output stream, converting IOExceptions into MojoExecutionExceptions
+     * @param outputStream
+     * @throws MojoExecutionException
+     */
+    public static void close(ZipOutputStream outputStream) throws MojoExecutionException {
+        if (outputStream != null) {
+            try {
+                outputStream.close();
+            } catch (IOException e) {
+                throw new MojoExecutionException("Error executing mojo", e);
+            }
+        }
     }
 
     //// BG - I have no idea what these do ////
