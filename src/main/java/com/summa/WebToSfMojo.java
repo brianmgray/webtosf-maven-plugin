@@ -58,10 +58,8 @@ public class WebToSfMojo extends AbstractMojo {
      * Class used to represent a filter for this mojo (token gets replaced by value)
      */
     public static class Filter {
-
         private String token;
         private String value;
-
         protected String getValue() {
             return this.value == null ? "" : value;
         }
@@ -95,6 +93,7 @@ public class WebToSfMojo extends AbstractMojo {
         File[] files = this.getFilesFromWebappDir();
         validateAndDebug(files);
 
+        // create static resources dir
         File staticResourcesDir = new File(outputDir.getAbsolutePath(), "staticResources");
         if (!staticResourcesDir.exists()) {
             staticResourcesDir.mkdirs();
@@ -102,7 +101,6 @@ public class WebToSfMojo extends AbstractMojo {
 
         try {
             zipResources(staticResourcesDir, files);
-            createForceDotComMetaData(staticResourcesDir);
             transformAllHtmlToPages(files);
         } catch (IOException e) {
             throw new MojoExecutionException("Error executing mojo", e);
@@ -160,7 +158,7 @@ public class WebToSfMojo extends AbstractMojo {
         } finally {
             zos.close();
         }
-
+        createForceDotComMetaData(staticResourcesDir);
     }
 
     /**
