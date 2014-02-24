@@ -71,7 +71,7 @@ public class WebToSfMojo extends AbstractMojo {
 
             // Replace .js and .css links with references to $Resource
             .add(new Filter("(.*)<apex:(.*).* value=\"(?!http)(.+)\".*>(.*)",
-                    "$1<apex:$2 value=\"{!URLFor(\\$Resource.appzip, '$3')}\"></apex:includeScript>$4", true))
+                    "$1<apex:$2 value=\"{!URLFor(\\$Resource.appzip, '$3')}\"></apex:$2>$4", true))
 
 
             .build();
