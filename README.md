@@ -1,6 +1,3 @@
-webtosf-maven-plugin
-====================
-
 # Overview
 
 ## Introduction
@@ -58,8 +55,7 @@ Converts a standard web project to a Force.com project
 | ------------- | ------------- | ------------- | ------------- |
 | webappDir | FileSet | true | Files to pull into the Force.com project |
 | outputDir | File | false | Path for the generated Force.com files. Default: ${project.build.directory}/${project.build.finalName} |
-| filters | List<Filter> | false | Filters to be applied to each html file. Each filter contains a token to search
-for, a value to replace and an isRegex field  |
+| filters | List<Filter> | false | Filters to be applied to each html file. Each filter contains a token to search for, a value to replace and an isRegex field  |
 | zipFileName | String| false | Name for the zip of resources. Default is appzip |
 
 ### System requirements
