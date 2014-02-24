@@ -51,6 +51,7 @@ com.summa:webtosf-maven-plugin:0.2:webtosf-maven-plugin
 Converts a standard web project to a Force.com project
 
 **Parameters:**
+
 | Name      | Type    | Required | Description                              |
 | --------- | ------- | -------- | ---------------------------------------- |
 | webappDir | FileSet | true     | Files to pull into the Force.com project |
