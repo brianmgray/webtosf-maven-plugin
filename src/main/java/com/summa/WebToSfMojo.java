@@ -61,15 +61,29 @@ public class WebToSfMojo extends AbstractMojo {
             .add(new Filter("</head>"))
             .add(new Filter("<body>"))
             .add(new Filter("</body>"))
+            .add(new Filter("(.*)<title>.*</title>(.*)", "$1$2", true))
+
+            // Replace external resource links
+            .add(new Filter("(.*)<script src=[\"'](.+)[\"']></script>(.*)",
+                    "$1<apex:includeScript value=\"$2\"></apex:includeScript>$3", true))
+            .add(new Filter("(.*)<link.*href=[\"'](.+)[\"'].*></link>(.*)",
+                    "$1<apex:stylesheet value=\"$2\"></apex:stylesheet>$3", true))
+
+            // Replace .js and .css links with references to $Resource
+            .add(new Filter("(.*)<apex:(.*).* value=\"(?!http)(.+)\".*>(.*)",
+                    "$1<apex:$2 value=\"{!URLFor(\\$Resource.appzip, '$3')}\"></apex:includeScript>$4", true))
+
+
             .build();
 
     /**
      * Class used to represent a filter for this mojo (token gets replaced by value)
      */
     public static class Filter {
+        public Filter() {
+        }
         public Filter(String token) {
             this.token = token;
-            this.isRegex = false;
         }
         public Filter(String token, String value) {
             this(token);
@@ -81,7 +95,7 @@ public class WebToSfMojo extends AbstractMojo {
         }
         protected String token;
         protected String value;
-        protected Boolean isRegex;
+        protected Boolean isRegex = false;
         protected String getValue() {
             return this.value == null ? "" : value;
         }
@@ -291,7 +305,7 @@ public class WebToSfMojo extends AbstractMojo {
      * @return the replaced line
      */
     private String replace(String line) {
-        for (Filter filter : filters) {
+        for (Filter filter : Iterables.concat(BASE_FILTERS, filters)) {
             if (filter.isRegex && line.matches(filter.token)) {
                 getLog().info("... replacing " + filter.token + " in line " + line);
                 line = line.replaceAll(filter.token, filter.getValue());

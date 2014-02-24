@@ -33,7 +33,7 @@ public class WebToSfMojoTest {
         this.outputDir = new File("./testOutput");
         if (!outputDir.exists()) {
             outputDir.mkdirs();
-            outputDir.deleteOnExit();
+//            outputDir.deleteOnExit();
         }
         TestUtils.reflectionSet(mojo, "outputDir", outputDir);
     }
@@ -83,6 +83,7 @@ public class WebToSfMojoTest {
             assertThat("page contained <doctype>", line, not(containsString("<!doctype html>")));
             assertThat("page contained <script>", line, not(containsString("</script>")));
             assertThat("page contained <title>", line, not(containsString("</title>")));
+            assertThat("page contained reference to test src", line, not(containsString("value=\"js/test.js\"")));
             goodCount += line.contains("<apex:includeScript") ? 1 : 0;
         }
         assertTrue("Page did not contain <apex:includeScript> tag", goodCount > 0);
@@ -108,13 +109,7 @@ public class WebToSfMojoTest {
 
     private List<WebToSfMojo.Filter> createFilters() {
         return newArrayList(
-            new WebToSfMojo.Filter("<!doctype html>"),
-            new WebToSfMojo.Filter("<head>"),
-            new WebToSfMojo.Filter("</head>"),
-            new WebToSfMojo.Filter(".*<title>.*</title>.*", "", true),
-            new WebToSfMojo.Filter("<script src=\"", "<apex:includeScript value="),
-            new WebToSfMojo.Filter("</script>", "</apex:includeScript>"),
-            new WebToSfMojo.Filter("js/test.js", "{!URLFor($Resource.appzip, 'js/test.js')}")
+//            new WebToSfMojo.Filter("js/test.js", "{!URLFor($Resource.appzip, 'js/test.js')}")
         );
     }
 }
