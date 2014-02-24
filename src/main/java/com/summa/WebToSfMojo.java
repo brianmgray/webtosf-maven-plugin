@@ -1,6 +1,7 @@
 package com.summa;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import org.apache.maven.model.FileSet;
@@ -49,15 +50,38 @@ public class WebToSfMojo extends AbstractMojo {
             .build();
 
     /**
+     * Filters always applied by default
+     */
+    private static final List<Filter> BASE_FILTERS = new ImmutableList.Builder<Filter>()
+            // remove unneeded tags
+            .add(new Filter("<!doctype html>"))
+            .add(new Filter("<html>"))
+            .add(new Filter("</html>"))
+            .add(new Filter("<head>"))
+            .add(new Filter("</head>"))
+            .add(new Filter("<body>"))
+            .add(new Filter("</body>"))
+            .build();
+
+    /**
      * Class used to represent a filter for this mojo (token gets replaced by value)
      */
     public static class Filter {
-        public Filter(String token, String value) {
+        public Filter(String token) {
             this.token = token;
+            this.isRegex = false;
+        }
+        public Filter(String token, String value) {
+            this(token);
             this.value = value;
+        }
+        public Filter(String token, String value, Boolean isRegex) {
+            this(token, value);
+            this.isRegex = isRegex;
         }
         protected String token;
         protected String value;
+        protected Boolean isRegex;
         protected String getValue() {
             return this.value == null ? "" : value;
         }
@@ -267,10 +291,14 @@ public class WebToSfMojo extends AbstractMojo {
      * @return the replaced line
      */
     private String replace(String line) {
-        for (Filter f : filters) {
-            if (line.contains(f.token)) {
-                getLog().info("... replacing " + f.token + " in line " + line);
-                line = line.replace(f.token, f.getValue());
+        for (Filter filter : filters) {
+            if (filter.isRegex && line.matches(filter.token)) {
+                getLog().info("... replacing " + filter.token + " in line " + line);
+                line = line.replaceAll(filter.token, filter.getValue());
+
+            } else if (!filter.isRegex && line.contains(filter.token)) {
+                getLog().info("... replacing regex " + filter.token + " in line " + line);
+                line = line.replace(filter.token, filter.getValue());
             }
         }
         return line;

@@ -82,6 +82,7 @@ public class WebToSfMojoTest {
         for (String line : lines) {
             assertThat("page contained <doctype>", line, not(containsString("<!doctype html>")));
             assertThat("page contained <script>", line, not(containsString("</script>")));
+            assertThat("page contained <title>", line, not(containsString("</title>")));
             goodCount += line.contains("<apex:includeScript") ? 1 : 0;
         }
         assertTrue("Page did not contain <apex:includeScript> tag", goodCount > 0);
@@ -107,7 +108,10 @@ public class WebToSfMojoTest {
 
     private List<WebToSfMojo.Filter> createFilters() {
         return newArrayList(
-            new WebToSfMojo.Filter("<!doctype html>", ""),
+            new WebToSfMojo.Filter("<!doctype html>"),
+            new WebToSfMojo.Filter("<head>"),
+            new WebToSfMojo.Filter("</head>"),
+            new WebToSfMojo.Filter(".*<title>.*</title>.*", "", true),
             new WebToSfMojo.Filter("<script src=\"", "<apex:includeScript value="),
             new WebToSfMojo.Filter("</script>", "</apex:includeScript>"),
             new WebToSfMojo.Filter("js/test.js", "{!URLFor($Resource.appzip, 'js/test.js')}")
