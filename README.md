@@ -1,5 +1,3 @@
-# Contents
-
 - [Overview](#overview)
 	- [Introduction](#introduction)
 	- [Distribution](#distribution)
