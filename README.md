@@ -53,8 +53,8 @@ Version: 0.2
 
 ### Goals available for this plugin
 
-| Goal | Description |
-| ------------- | ------------- |
+| Goal    | Description |
+| ------- | ----------- |
 | webtosf | Convert standard web project to force.com project |
 
 ### webtosf
