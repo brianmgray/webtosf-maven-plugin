@@ -18,6 +18,7 @@
 ## Introduction
 
 In Force.com development, developers have 2 options:
+
 1. use the web-based development tools
 2. use the Force.com IDE and sync with the online deployment environment
 
