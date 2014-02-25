@@ -1,3 +1,20 @@
+# Contents
+
+- [Overview](#overview)
+	- [Introduction](#introduction)
+	- [Distribution](#distribution)
+	- [Goals](#goals)
+		- [Goals available for this plugin](#goals-available-for-this-plugin)
+		- [webtosf](#webtosf)
+		- [System requirements](#system-requirements)
+	- [Usage: webtosf](#usage-webtosf)
+		- [Without pom.xml change](#without-pomxml-change)
+		- [With pom.xml change](#with-pomxml-change)
+- [Examples](#examples)
+	- [Custom filters](#custom-filters)
+	- [Regex Filters](#regex-filters)
+	- [Links](#links)
+
 # Overview
 
 ## Introduction
