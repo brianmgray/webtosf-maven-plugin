@@ -1,20 +1,20 @@
 package com.summa;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.tools.ant.util.StringUtils;
+import static com.google.common.collect.Iterables.transform;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 import java.util.zip.ZipOutputStream;
 
-import static com.google.common.collect.Iterables.transform;
+import org.apache.maven.plugin.MojoExecutionException;
+
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 
 /**
  * Utilities
@@ -33,10 +33,9 @@ public final class Utils {
      */
     public static String getCommaSeparatedList(List<?> patterns) {
         return Joiner.on(",").join(transform(patterns, new Function<Object, String>() {
-            @Override
-            public String apply(@Nullable Object input) {
-                return input == null ? "" : input.toString();
-            }
+			public String apply(Object input) {
+				return input == null ? "" : input.toString();
+			}
         }));
     }
 
@@ -83,8 +82,8 @@ public final class Utils {
     //// BG - I have no idea what these do ////
 
     public static String cleanName(String name) {
-        Vector<String> paths = StringUtils.split(name, LF.charAt(0));
-        name = paths.elementAt(paths.size() - 1);
+    	Iterable<String> paths = Splitter.on(LF.charAt(0)).split(name);
+    	name = Iterables.getLast(paths);
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < name.length(); i++) {
             char c = name.charAt(i);

@@ -1,7 +1,6 @@
 package com.summa;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
+import static com.google.common.collect.Lists.newArrayList;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,7 +13,8 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static com.google.common.collect.Lists.*;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 
 /**
  * Test Utilities
@@ -124,14 +124,21 @@ public final class TestUtils {
      * @throws IOException
      */
     public static List<String> readFile(File testPage) throws IOException {
-        List<String> lines = newArrayList();
-        FileReader fr = new FileReader(testPage);
-        BufferedReader reader = new BufferedReader(fr);
-        String line = reader.readLine();
-        while (line != null) {
-            lines.add(line);
-            line = reader.readLine();
+    	BufferedReader reader = null;
+    	try {
+        	List<String> lines = newArrayList();
+        	FileReader fr = new FileReader(testPage);
+        	reader = new BufferedReader(fr);
+        	String line = reader.readLine();
+        	while (line != null) {
+        		lines.add(line);
+        		line = reader.readLine();
+        	}
+        	return lines;
+        } finally {
+        	if (reader != null) {
+        		reader.close();
+        	}
         }
-        return lines;
     }
 }
