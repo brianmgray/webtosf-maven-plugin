@@ -55,6 +55,8 @@ public class WebToSfMojo extends AbstractMojo {
     private static final List<Filter> BASE_FILTERS = new ImmutableList.Builder<Filter>()
             // remove unneeded tags
             .add(new Filter("<!doctype html>"))
+            .add(new Filter("<!DOCTYPE HTML>"))
+            .add(new Filter("<meta charset=\"utf-8\" />"))
             .add(new Filter("<html>"))
             .add(new Filter("</html>"))
             .add(new Filter("<head>"))
@@ -64,9 +66,9 @@ public class WebToSfMojo extends AbstractMojo {
             .add(new Filter("(.*)<title>.*</title>(.*)", "$1$2", true))
 
             // Replace external resource links
-            .add(new Filter("(.*)<script src=[\"'](.+)[\"']></script>(.*)",
+            .add(new Filter("(.*)<script.*src=[\"'](.+)[\"']></script>(.*)",
                     "$1<apex:includeScript value=\"$2\"></apex:includeScript>$3", true))
-            .add(new Filter("(.*)<link.*href=[\"'](.+)[\"'].*></link>(.*)",
+            .add(new Filter("(.*)<link.*href=[\"'](.+)[\"'].*>(</link>)*(.*)",
                     "$1<apex:stylesheet value=\"$2\"></apex:stylesheet>$3", true))
 
             // Replace .js and .css links with references to $Resource
