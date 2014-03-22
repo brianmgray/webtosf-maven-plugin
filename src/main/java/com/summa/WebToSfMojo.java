@@ -70,12 +70,6 @@ public class WebToSfMojo extends AbstractMojo {
                     "$1<apex:includeScript value=\"$2\"></apex:includeScript>$3", true))
             .add(new Filter("(.*)<link.*href=[\"'](.+)[\"'].*>(</link>)*(.*)",
                     "$1<apex:stylesheet value=\"$2\"></apex:stylesheet>$3", true))
-
-            // Replace .js and .css links with references to $Resource
-            .add(new Filter("(.*)<apex:(.*).* value=\"(?!http)(.+)\".*>(.*)",
-                    "$1<apex:$2 value=\"{!URLFor(\\$Resource.appzip, '$3')}\"></apex:$2>$4", true))
-
-
             .build();
 
     /**
@@ -131,10 +125,16 @@ public class WebToSfMojo extends AbstractMojo {
     /**
      * Name of the generated zip file
      */
-    @Parameter( property = "webtosf.zipFileName", defaultValue = "appzip" )
+    @Parameter( property = "webtosf.zipFilename", defaultValue = "appzip" )
     private String zipFilename;
 
-	public void execute() throws MojoExecutionException {
+    public void execute() throws MojoExecutionException {
+        // add one more default rule, this one dependent on zipFilename
+        // Replace .js and .css links with references to $Resource
+        getLog().info("Using zipfilename=" + zipFilename);
+        filters.add(new Filter("(.*)<apex:(.*).* value=\"(?!http)(.+)\".*>(.*)",
+            "$1<apex:$2 value=\"{!URLFor(\\$Resource." + zipFilename + ", '$3')}\"></apex:$2>$4", true));
+
         File[] files = this.filesIncludedByConfiguration();
         validateAndDebug(files);
 
